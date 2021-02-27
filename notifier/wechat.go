@@ -9,64 +9,27 @@ import (
 	"github.com/hguandl/dr-feeder/v2/notifier/wxmsgapp"
 )
 
-type workWechatNotifier struct {
-	client *wxmsgapp.WxAPIClient
+type WorkWechatNotifier struct {
+	Client *wxmsgapp.WxAPIClient
 }
 
 type textCardPayload struct {
-	Touser   string   `json:"touser"`
-	Msgtype  string   `json:"msgtype"`
-	Agentid  string   `json:"agentid"`
-	Textcard textCard `json:"textcard"`
+	Touser  string   `json:"touser"`
+	Msgtype string   `json:"msgtype"`
+	Agentid string   `json:"agentid"`
+	News    textCard `json:"textcard"`
 }
 
 type textCard struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
-	Btntxt      string `json:"btntxt"`
-}
-
-// NewWorkWechatNotifier creates a Notifier with Work Wechat App.
-func NewWorkWechatNotifier(corpID string, agentID string, corpSecret string,
-	toUser string) Notifier {
-	client := wxmsgapp.WxAPIClient{
-		CorpID:     corpID,
-		ToUser:     toUser,
-		AgentID:    agentID,
-		CorpSecret: corpSecret,
-	}
-	return workWechatNotifier{client: &client}
+	PicURL      string `json:"picurl"`
 }
 
 // FromWxAPIClient creates a Notifier with an API client.
 func FromWxAPIClient(client *wxmsgapp.WxAPIClient) Notifier {
-	return workWechatNotifier{client: client}
-}
-
-// FromWorkWechatNotifierConfig parses the config to create a workWechatNotifier.
-func FromWorkWechatNotifierConfig(config map[string]interface{}) (Notifier, bool) {
-	corpID, ok := config["corpid"].(string)
-	if !ok {
-		return nil, false
-	}
-
-	agentID, ok := config["agentid"].(string)
-	if !ok {
-		return nil, false
-	}
-
-	corpSecret, ok := config["corpsecret"].(string)
-	if !ok {
-		return nil, false
-	}
-
-	toUser, ok := config["touser"].(string)
-	if !ok {
-		return nil, false
-	}
-
-	return NewWorkWechatNotifier(corpID, agentID, corpSecret, toUser), true
+	return WorkWechatNotifier{Client: client}
 }
 
 func formatText(payload common.NotifyPayload) (string, string) {
@@ -106,19 +69,19 @@ func formatText(payload common.NotifyPayload) (string, string) {
 	return payload.Title, payload.Body
 }
 
-func (notifier workWechatNotifier) Push(payload common.NotifyPayload) {
+func (notifier WorkWechatNotifier) Push(payload common.NotifyPayload) {
 	title, desc := formatText(payload)
 
 	data, err := json.Marshal(
 		textCardPayload{
-			Touser:  notifier.client.ToUser,
-			Msgtype: "textcard",
-			Agentid: notifier.client.AgentID,
-			Textcard: textCard{
+			Touser:  notifier.Client.ToUser,
+			Msgtype: "news",
+			Agentid: notifier.Client.AgentID,
+			News: textCard{
 				Title:       title,
 				Description: desc,
 				URL:         payload.URL,
-				Btntxt:      "全文",
+				PicURL:      payload.PicURL,
 			},
 		},
 	)
@@ -127,7 +90,7 @@ func (notifier workWechatNotifier) Push(payload common.NotifyPayload) {
 		return
 	}
 
-	err = notifier.client.SendMsg(data)
+	err = notifier.Client.SendMsg(data)
 	if err != nil {
 		log.Println(err)
 	}

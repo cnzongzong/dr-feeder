@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 
 	"github.com/hguandl/dr-feeder/v2/notifier"
+	"github.com/hguandl/dr-feeder/v2/notifier/wxmsgapp"
+	"github.com/mitchellh/mapstructure"
 	"gopkg.in/yaml.v2"
 )
 
@@ -41,40 +43,25 @@ func ParseConfig(path string) ([]notifier.Notifier, error) {
 
 		switch ntft {
 		case "custom":
-			ntf, ok := notifier.FromCustomNotifierConfig(ntfc)
-			if ok {
-				ret[idx] = ntf
-			} else {
-				err = fmt.Errorf("Cannot parse notifier #%d", idx)
-			}
+			var ntf notifier.CustomNotifier
+			err = mapstructure.Decode(ntfc, &ntf)
+			ret[idx] = ntf
 		case "tgbot":
-			ntf, ok := notifier.FromTgBotNotifierConfig(ntfc)
-			if ok {
-				ret[idx] = ntf
-			} else {
-				err = fmt.Errorf("Cannot parse notifier #%d", idx)
-			}
+			var ntf notifier.TgBotNotifier
+			err = mapstructure.Decode(ntfc, &ntf)
+			ret[idx] = ntf
 		case "workwx":
-			ntf, ok := notifier.FromWorkWechatNotifierConfig(ntfc)
-			if ok {
-				ret[idx] = ntf
-			} else {
-				err = fmt.Errorf("Cannot parse notifier #%d", idx)
-			}
+			var wxClient wxmsgapp.WxAPIClient
+			err = mapstructure.Decode(ntfc, &wxClient)
+			ret[idx] = notifier.WorkWechatNotifier{Client: &wxClient}
 		case "bark":
-			ntf, ok := notifier.FromBarkNotifierConfig(ntfc)
-			if ok {
-				ret[idx] = ntf
-			} else {
-				err = fmt.Errorf("Cannot parse notifier #%d", idx)
-			}
+			var ntf notifier.BarkNotifier
+			err = mapstructure.Decode(ntfc, &ntf)
+			ret[idx] = ntf
 		case "ifttt":
-			ntf, ok := notifier.FromIFTTTNotifierConfig(ntfc)
-			if ok {
-				ret[idx] = ntf
-			} else {
-				err = fmt.Errorf("Cannot parse notifier #%d", idx)
-			}
+			var ntf notifier.IFTTTNotifier
+			err = mapstructure.Decode(ntfc, &ntf)
+			ret[idx] = ntf
 		default:
 			err = fmt.Errorf("Unknown notifier type \"%s\"", ntft)
 		}
