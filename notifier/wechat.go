@@ -13,18 +13,22 @@ type WorkWechatNotifier struct {
 	Client *wxmsgapp.WxAPIClient
 }
 
-type newsPayload struct {
+type article struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	URL         string `json:"url"`
+	Picurl      string `json:"picurl"`
+}
+
+type news struct {
+	Articles []article `json:"articles"`
+}
+
+type msgPayload struct {
 	Touser  string `json:"touser"`
 	Msgtype string `json:"msgtype"`
 	Agentid string `json:"agentid"`
 	News    news   `json:"news"`
-}
-
-type news struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	URL         string `json:"url"`
-	PicURL      string `json:"picurl"`
 }
 
 // FromWxAPIClient creates a Notifier with an API client.
@@ -72,17 +76,19 @@ func formatText(payload common.NotifyPayload) (string, string) {
 func (notifier WorkWechatNotifier) Push(payload common.NotifyPayload) {
 	title, desc := formatText(payload)
 
+	articles := make([]article, 1)
+	articles[0] = article{
+		Title:       title,
+		Description: desc,
+		URL:         payload.URL,
+		Picurl:      payload.PicURL,
+	}
 	data, err := json.Marshal(
-		newsPayload{
+		msgPayload{
 			Touser:  notifier.Client.ToUser,
 			Msgtype: "news",
 			Agentid: notifier.Client.AgentID,
-			News: news{
-				Title:       title,
-				Description: desc,
-				URL:         payload.URL,
-				PicURL:      payload.PicURL,
-			},
+			News:    news{Articles: articles},
 		},
 	)
 	if err != nil {
