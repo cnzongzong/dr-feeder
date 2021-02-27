@@ -13,14 +13,14 @@ type WorkWechatNotifier struct {
 	Client *wxmsgapp.WxAPIClient
 }
 
-type textCardPayload struct {
-	Touser  string   `json:"touser"`
-	Msgtype string   `json:"msgtype"`
-	Agentid string   `json:"agentid"`
-	News    textCard `json:"textcard"`
+type newsPayload struct {
+	Touser  string `json:"touser"`
+	Msgtype string `json:"msgtype"`
+	Agentid string `json:"agentid"`
+	News    news   `json:"news"`
 }
 
-type textCard struct {
+type news struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 	URL         string `json:"url"`
@@ -73,11 +73,11 @@ func (notifier WorkWechatNotifier) Push(payload common.NotifyPayload) {
 	title, desc := formatText(payload)
 
 	data, err := json.Marshal(
-		textCardPayload{
+		newsPayload{
 			Touser:  notifier.Client.ToUser,
 			Msgtype: "news",
 			Agentid: notifier.Client.AgentID,
-			News: textCard{
+			News: news{
 				Title:       title,
 				Description: desc,
 				URL:         payload.URL,
